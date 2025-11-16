@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tencent.wxcloudrun.dao.SportOpportunityMapper">
+
+    <resultMap id="sportOpportunityResultMap" type="com.tencent.wxcloudrun.model.SportOpportunity">
+        <id property="id" column="id"/>
+        <result property="teamId" column="team_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="allocatedAt" column="allocated_at" javaType="java.time.LocalDateTime"/>
+        <result property="expireAt" column="expire_at" javaType="java.time.LocalDateTime"/>
+        <result property="status" column="status"/>
+        <result property="sportRecordId" column="sport_record_id"/>
+        <result property="createdAt" column="created_at" javaType="java.time.LocalDateTime"/>
+        <result property="updatedAt" column="updated_at" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="sportOpportunityResultMap" parameterType="java.lang.Integer">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="sportOpportunityResultMap" parameterType="java.lang.Integer">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByUserIdAndStatus" resultMap="sportOpportunityResultMap">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE user_id = #{userId} AND status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByTeamId" resultMap="sportOpportunityResultMap" parameterType="java.lang.Integer">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE team_id = #{teamId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByUserIdAndTeamId" resultMap="sportOpportunityResultMap">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE user_id = #{userId} AND team_id = #{teamId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findExpired" resultMap="sportOpportunityResultMap" parameterType="java.time.LocalDateTime">
+        SELECT id, team_id, user_id, allocated_at, expire_at, status, sport_record_id, created_at, updated_at
+        FROM sport_opportunities
+        WHERE expire_at &lt; #{now} AND status = 'UNUSED'
+    </select>
+
+    <insert id="insert" parameterType="com.tencent.wxcloudrun.model.SportOpportunity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sport_opportunities (team_id, user_id, allocated_at, expire_at, status)
+        VALUES (#{teamId}, #{userId}, #{allocatedAt}, #{expireAt}, #{status})
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sport_opportunities (team_id, user_id, allocated_at, expire_at, status)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.teamId}, #{item.userId}, #{item.allocatedAt}, #{item.expireAt}, #{item.status})
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.tencent.wxcloudrun.model.SportOpportunity">
+        UPDATE sport_opportunities
+        SET team_id = #{teamId},
+            user_id = #{userId},
+            allocated_at = #{allocatedAt},
+            expire_at = #{expireAt},
+            status = #{status},
+            sport_record_id = #{sportRecordId}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE sport_opportunities
+        SET status = #{status},
+            sport_record_id = #{sportRecordId},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
+

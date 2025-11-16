@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tencent.wxcloudrun.dao.NotificationMapper">
+
+    <resultMap id="notificationResultMap" type="com.tencent.wxcloudrun.model.Notification">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="isRead" column="is_read" javaType="java.lang.Boolean"/>
+        <result property="createdAt" column="created_at" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="notificationResultMap" parameterType="java.lang.Integer">
+        SELECT id, user_id, type, title, content, is_read, created_at
+        FROM notifications
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="notificationResultMap" parameterType="java.lang.Integer">
+        SELECT id, user_id, type, title, content, is_read, created_at
+        FROM notifications
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByUserIdAndIsRead" resultMap="notificationResultMap">
+        SELECT id, user_id, type, title, content, is_read, created_at
+        FROM notifications
+        WHERE user_id = #{userId} AND is_read = #{isRead}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="countUnread" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{userId} AND is_read = 0
+    </select>
+
+    <insert id="insert" parameterType="com.tencent.wxcloudrun.model.Notification" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notifications (user_id, type, title, content, is_read)
+        VALUES (#{userId}, #{type}, #{title}, #{content}, #{isRead})
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO notifications (user_id, type, title, content, is_read)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.type}, #{item.title}, #{item.content}, #{item.isRead})
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.tencent.wxcloudrun.model.Notification">
+        UPDATE notifications
+        SET type = #{type},
+            title = #{title},
+            content = #{content},
+            is_read = #{isRead}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markAsRead" parameterType="java.lang.Integer">
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="markAllAsRead" parameterType="java.lang.Integer">
+        UPDATE notifications
+        SET is_read = 1
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
+

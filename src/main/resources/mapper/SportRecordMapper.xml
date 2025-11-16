@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tencent.wxcloudrun.dao.SportRecordMapper">
+
+    <resultMap id="sportRecordResultMap" type="com.tencent.wxcloudrun.model.SportRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="teamId" column="team_id"/>
+        <result property="sportType" column="sport_type"/>
+        <result property="duration" column="duration"/>
+        <result property="sportDate" column="sport_date" javaType="java.time.LocalDate"/>
+        <result property="location" column="location"/>
+        <result property="description" column="description"/>
+        <result property="photos" column="photos"/>
+        <result property="createdAt" column="created_at" javaType="java.time.LocalDateTime"/>
+        <result property="updatedAt" column="updated_at" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="sportRecordResultMap" parameterType="java.lang.Integer">
+        SELECT id, user_id, team_id, sport_type, duration, sport_date, location, description, photos, created_at, updated_at
+        FROM sport_records
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="sportRecordResultMap" parameterType="java.lang.Integer">
+        SELECT id, user_id, team_id, sport_type, duration, sport_date, location, description, photos, created_at, updated_at
+        FROM sport_records
+        WHERE user_id = #{userId}
+        ORDER BY sport_date DESC, created_at DESC
+    </select>
+
+    <select id="findByUserIdAndTeamId" resultMap="sportRecordResultMap">
+        SELECT id, user_id, team_id, sport_type, duration, sport_date, location, description, photos, created_at, updated_at
+        FROM sport_records
+        WHERE user_id = #{userId} AND team_id = #{teamId}
+        ORDER BY sport_date DESC, created_at DESC
+    </select>
+
+    <select id="findByTeamId" resultMap="sportRecordResultMap" parameterType="java.lang.Integer">
+        SELECT id, user_id, team_id, sport_type, duration, sport_date, location, description, photos, created_at, updated_at
+        FROM sport_records
+        WHERE team_id = #{teamId}
+        ORDER BY sport_date DESC, created_at DESC
+    </select>
+
+    <select id="findByUserIdWithFilter" resultMap="sportRecordResultMap">
+        SELECT id, user_id, team_id, sport_type, duration, sport_date, location, description, photos, created_at, updated_at
+        FROM sport_records
+        WHERE user_id = #{userId}
+        <if test="teamId != null">
+            AND team_id = #{teamId}
+        </if>
+        <if test="sportType != null and sportType != ''">
+            AND sport_type = #{sportType}
+        </if>
+        <if test="year != null">
+            AND YEAR(sport_date) = #{year}
+        </if>
+        <if test="month != null">
+            AND MONTH(sport_date) = #{month}
+        </if>
+        ORDER BY sport_date DESC, created_at DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countByUserIdWithFilter" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sport_records
+        WHERE user_id = #{userId}
+        <if test="teamId != null">
+            AND team_id = #{teamId}
+        </if>
+        <if test="sportType != null and sportType != ''">
+            AND sport_type = #{sportType}
+        </if>
+        <if test="year != null">
+            AND YEAR(sport_date) = #{year}
+        </if>
+        <if test="month != null">
+            AND MONTH(sport_date) = #{month}
+        </if>
+    </select>
+
+    <select id="sumDurationByUserIdAndDateRange" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(duration), 0)
+        FROM sport_records
+        WHERE user_id = #{userId}
+        AND sport_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <select id="countByUserIdAndDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sport_records
+        WHERE user_id = #{userId}
+        AND sport_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <insert id="insert" parameterType="com.tencent.wxcloudrun.model.SportRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sport_records (user_id, team_id, sport_type, duration, sport_date, location, description, photos)
+        VALUES (#{userId}, #{teamId}, #{sportType}, #{duration}, #{sportDate}, #{location}, #{description}, #{photos})
+    </insert>
+
+    <update id="update" parameterType="com.tencent.wxcloudrun.model.SportRecord">
+        UPDATE sport_records
+        SET sport_type = #{sportType},
+            duration = #{duration},
+            sport_date = #{sportDate},
+            location = #{location},
+            description = #{description},
+            photos = #{photos}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Integer">
+        DELETE FROM sport_records WHERE id = #{id}
+    </delete>
+
+</mapper>
+
