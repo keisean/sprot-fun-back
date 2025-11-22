@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 /**
  * 运动机会管理控制器
  */
@@ -25,7 +27,7 @@ public class SportOpportunityController {
     final Logger logger;
 
     public SportOpportunityController(@Autowired SportOpportunityService sportOpportunityService,
-                                     @Autowired TeamService teamService) {
+            @Autowired TeamService teamService) {
         this.sportOpportunityService = sportOpportunityService;
         this.teamService = teamService;
         this.logger = LoggerFactory.getLogger(SportOpportunityController.class);
@@ -35,8 +37,8 @@ public class SportOpportunityController {
      * 分配运动机会
      */
     @PostMapping("/api/opportunity/allocate")
-    public ApiResponse allocateOpportunities(@RequestBody AllocateOpportunityRequest request,
-                                             @RequestHeader("X-User-Id") Integer userId) {
+    public ApiResponse allocateOpportunities(@RequestBody @Valid AllocateOpportunityRequest request,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/opportunity/allocate post request, userId: {}", userId);
 
         try {
@@ -48,8 +50,7 @@ public class SportOpportunityController {
                     request.getTeamId(),
                     request.getUserIds(),
                     request.getCount(),
-                    request.getExpireAt()
-            );
+                    request.getExpireAt());
             return ApiResponse.ok();
         } catch (Exception e) {
             logger.error("分配运动机会失败", e);
@@ -62,8 +63,8 @@ public class SportOpportunityController {
      */
     @GetMapping("/api/opportunity/my-opportunities")
     public ApiResponse getMyOpportunities(@RequestHeader("X-User-Id") Integer userId,
-                                          @RequestParam(required = false) Integer teamId,
-                                          @RequestParam(required = false) String status) {
+            @RequestParam(required = false) Integer teamId,
+            @RequestParam(required = false) String status) {
         logger.info("/api/opportunity/my-opportunities get request, userId: {}", userId);
 
         try {
@@ -108,4 +109,3 @@ public class SportOpportunityController {
         }
     }
 }
-

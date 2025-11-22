@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 /**
  * 团队管理控制器
  */
@@ -33,8 +35,8 @@ public class TeamController {
      * 创建团队
      */
     @PostMapping("/api/team/create")
-    public ApiResponse createTeam(@RequestBody CreateTeamRequest request,
-                                  @RequestHeader("X-User-Id") Integer userId) {
+    public ApiResponse createTeam(@RequestBody @Valid CreateTeamRequest request,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/team/create post request, userId: {}", userId);
 
         try {
@@ -83,8 +85,8 @@ public class TeamController {
      * 加入团队
      */
     @PostMapping("/api/team/join")
-    public ApiResponse joinTeam(@RequestBody JoinTeamRequest request,
-                                @RequestHeader("X-User-Id") Integer userId) {
+    public ApiResponse joinTeam(@RequestBody @Valid JoinTeamRequest request,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/team/join post request, userId: {}", userId);
 
         try {
@@ -117,8 +119,8 @@ public class TeamController {
      */
     @DeleteMapping("/api/team/{teamId}/members/{memberId}")
     public ApiResponse removeMember(@PathVariable Integer teamId,
-                                    @PathVariable Integer memberId,
-                                    @RequestHeader("X-User-Id") Integer userId) {
+            @PathVariable Integer memberId,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/team/{}/members/{} delete request", teamId, memberId);
 
         try {
@@ -138,7 +140,7 @@ public class TeamController {
      */
     @DeleteMapping("/api/team/{teamId}")
     public ApiResponse deleteTeam(@PathVariable Integer teamId,
-                                  @RequestHeader("X-User-Id") Integer userId) {
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/team/{} delete request", teamId);
 
         try {
@@ -153,4 +155,3 @@ public class TeamController {
         }
     }
 }
-

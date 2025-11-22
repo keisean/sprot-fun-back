@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 /**
  * 运动记录控制器
  */
@@ -32,7 +34,7 @@ public class SportRecordController {
     final Logger logger;
 
     public SportRecordController(@Autowired SportRecordService sportRecordService,
-                                 @Autowired SportOpportunityService sportOpportunityService) {
+            @Autowired SportOpportunityService sportOpportunityService) {
         this.sportRecordService = sportRecordService;
         this.sportOpportunityService = sportOpportunityService;
         this.objectMapper = new ObjectMapper();
@@ -43,8 +45,8 @@ public class SportRecordController {
      * 使用运动机会并创建记录
      */
     @PostMapping("/api/sport-record/use-opportunity")
-    public ApiResponse useOpportunity(@RequestBody UseOpportunityRequest request,
-                                      @RequestHeader("X-User-Id") Integer userId) {
+    public ApiResponse useOpportunity(@RequestBody @Valid UseOpportunityRequest request,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/sport-record/use-opportunity post request, userId: {}", userId);
 
         try {
@@ -75,8 +77,7 @@ public class SportRecordController {
                     request.getSportDate(),
                     request.getLocation(),
                     request.getDescription(),
-                    photosJson
-            );
+                    photosJson);
 
             sportOpportunityService.useOpportunity(request.getOpportunityId(), record.getId());
 
@@ -95,12 +96,12 @@ public class SportRecordController {
      */
     @GetMapping("/api/sport-record/my-records")
     public ApiResponse getMyRecords(@RequestHeader("X-User-Id") Integer userId,
-                                    @RequestParam(required = false) Integer teamId,
-                                    @RequestParam(required = false) String sportType,
-                                    @RequestParam(required = false) Integer year,
-                                    @RequestParam(required = false) Integer month,
-                                    @RequestParam(defaultValue = "1") Integer page,
-                                    @RequestParam(defaultValue = "20") Integer pageSize) {
+            @RequestParam(required = false) Integer teamId,
+            @RequestParam(required = false) String sportType,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize) {
         logger.info("/api/sport-record/my-records get request, userId: {}", userId);
 
         try {
@@ -146,8 +147,8 @@ public class SportRecordController {
      */
     @PutMapping("/api/sport-record/{recordId}")
     public ApiResponse updateRecord(@PathVariable Integer recordId,
-                                    @RequestBody UpdateSportRecordRequest request,
-                                    @RequestHeader("X-User-Id") Integer userId) {
+            @RequestBody UpdateSportRecordRequest request,
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/sport-record/{} put request, userId: {}", recordId, userId);
 
         try {
@@ -186,7 +187,7 @@ public class SportRecordController {
      */
     @DeleteMapping("/api/sport-record/{recordId}")
     public ApiResponse deleteRecord(@PathVariable Integer recordId,
-                                    @RequestHeader("X-User-Id") Integer userId) {
+            @RequestHeader("X-User-Id") Integer userId) {
         logger.info("/api/sport-record/{} delete request, userId: {}", recordId, userId);
 
         try {
@@ -206,4 +207,3 @@ public class SportRecordController {
         }
     }
 }
-
