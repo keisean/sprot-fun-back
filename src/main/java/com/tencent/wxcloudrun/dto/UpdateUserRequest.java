@@ -6,4 +6,5 @@ import lombok.Data;
 public class UpdateUserRequest {
     private Integer userId;
     private String nickname;
+    private String avatarUrl;
 }
