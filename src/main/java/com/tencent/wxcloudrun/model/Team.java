@@ -24,5 +24,10 @@ public class Team implements Serializable {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    /**
+     * 团队成员个数（不持久化到数据库）
+     */
+    private Integer memberCount;
 }
 

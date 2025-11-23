@@ -10,6 +10,7 @@
         <result property="creatorId" column="creator_id"/>
         <result property="createdAt" column="created_at" javaType="java.time.LocalDateTime"/>
         <result property="updatedAt" column="updated_at" javaType="java.time.LocalDateTime"/>
+        <result property="memberCount" column="member_count"/>
     </resultMap>
 
     <select id="findById" resultMap="teamResultMap" parameterType="java.lang.Integer">
@@ -25,10 +26,13 @@
     </select>
 
     <select id="findByUserId" resultMap="teamResultMap" parameterType="java.lang.Integer">
-        SELECT t.id, t.team_name, t.description, t.invite_code, t.creator_id, t.created_at, t.updated_at
+        SELECT t.id, t.team_name, t.description, t.invite_code, t.creator_id, t.created_at, t.updated_at,
+               COUNT(DISTINCT tm2.user_id) as member_count
         FROM teams t
         INNER JOIN team_members tm ON t.id = tm.team_id
+        LEFT JOIN team_members tm2 ON t.id = tm2.team_id
         WHERE tm.user_id = #{userId}
+        GROUP BY t.id, t.team_name, t.description, t.invite_code, t.creator_id, t.created_at, t.updated_at
     </select>
 
     <insert id="insert" parameterType="com.tencent.wxcloudrun.model.Team" useGeneratedKeys="true" keyProperty="id">
