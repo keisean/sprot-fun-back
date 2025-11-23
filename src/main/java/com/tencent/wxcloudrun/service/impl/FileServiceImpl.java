@@ -31,6 +31,28 @@ public class FileServiceImpl implements FileService {
     @Value("${file.access.base-url:}")
     private String baseUrl;
 
+    /**
+     * 获取上传目录的绝对路径
+     */
+    private Path getUploadBasePath() {
+        Path basePath;
+        if (Paths.get(uploadDir).isAbsolute()) {
+            // 如果配置的是绝对路径，直接使用
+            basePath = Paths.get(uploadDir);
+        } else {
+            // 如果是相对路径，使用用户目录或系统临时目录作为基础
+            String userDir = System.getProperty("user.dir");
+            if (userDir != null && !userDir.isEmpty()) {
+                basePath = Paths.get(userDir, uploadDir);
+            } else {
+                // 如果无法获取用户目录，使用系统临时目录
+                String tempDir = System.getProperty("java.io.tmpdir");
+                basePath = Paths.get(tempDir, uploadDir);
+            }
+        }
+        return basePath.toAbsolutePath().normalize();
+    }
+
     @Override
     public String uploadAvatar(MultipartFile file, Integer userId) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -54,11 +76,15 @@ public class FileServiceImpl implements FileService {
             throw new IllegalArgumentException("文件大小不能超过5MB");
         }
 
+        // 获取上传基础路径（绝对路径）
+        Path basePath = getUploadBasePath();
+        
         // 创建上传目录
         String relativePath = avatarPath + File.separator + userId;
-        Path uploadPath = Paths.get(uploadDir, relativePath);
+        Path uploadPath = basePath.resolve(relativePath);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
+            logger.info("创建上传目录: {}", uploadPath);
         }
 
         // 生成唯一文件名
@@ -67,8 +93,14 @@ public class FileServiceImpl implements FileService {
 
         // 保存文件
         file.transferTo(filePath.toFile());
+        
+        // 验证文件是否保存成功
+        if (!Files.exists(filePath)) {
+            throw new IOException("文件保存失败: " + filePath);
+        }
 
-        logger.info("头像上传成功: userId={}, fileName={}", userId, fileName);
+        logger.info("头像上传成功: userId={}, fileName={}, filePath={}, fileSize={}", 
+                userId, fileName, filePath, Files.size(filePath));
 
         // 返回文件访问路径
         String relativeFilePath = relativePath.replace(File.separator, "/") + "/" + fileName;

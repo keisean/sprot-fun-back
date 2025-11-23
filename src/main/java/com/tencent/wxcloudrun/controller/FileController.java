@@ -30,6 +30,28 @@ public class FileController {
     private String uploadDir;
 
     /**
+     * 获取上传目录的绝对路径
+     */
+    private Path getUploadBasePath() {
+        Path basePath;
+        if (Paths.get(uploadDir).isAbsolute()) {
+            // 如果配置的是绝对路径，直接使用
+            basePath = Paths.get(uploadDir);
+        } else {
+            // 如果是相对路径，使用用户目录或系统临时目录作为基础
+            String userDir = System.getProperty("user.dir");
+            if (userDir != null && !userDir.isEmpty()) {
+                basePath = Paths.get(userDir, uploadDir);
+            } else {
+                // 如果无法获取用户目录，使用系统临时目录
+                String tempDir = System.getProperty("java.io.tmpdir");
+                basePath = Paths.get(tempDir, uploadDir);
+            }
+        }
+        return basePath.toAbsolutePath().normalize();
+    }
+
+    /**
      * 获取文件
      * 支持路径如: /api/files/avatar/1/filename.jpg
      */
@@ -43,20 +65,22 @@ public class FileController {
                 requestPath = requestPath.substring(1);
             }
             
+            // 获取上传基础路径（绝对路径）
+            Path basePath = getUploadBasePath();
+            
             // 构建文件路径
-            Path filePath = Paths.get(uploadDir, requestPath);
+            Path filePath = basePath.resolve(requestPath);
             File file = filePath.toFile();
 
             if (!file.exists() || !file.isFile()) {
-                logger.warn("文件不存在: {}", filePath);
+                logger.warn("文件不存在: {} (basePath: {}, requestPath: {})", filePath, basePath, requestPath);
                 return ResponseEntity.notFound().build();
             }
 
             // 检查文件是否在上传目录内（安全验证）
-            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             Path resolvedPath = filePath.toAbsolutePath().normalize();
-            if (!resolvedPath.startsWith(uploadPath)) {
-                logger.warn("非法文件访问: {}", resolvedPath);
+            if (!resolvedPath.startsWith(basePath)) {
+                logger.warn("非法文件访问: {} (basePath: {})", resolvedPath, basePath);
                 return ResponseEntity.notFound().build();
             }
 

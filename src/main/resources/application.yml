@@ -28,8 +28,13 @@ wechat:
 # 文件上传配置
 file:
   upload:
-    dir: uploads
+    # 上传目录，支持相对路径和绝对路径
+    # 相对路径：基于 user.dir 或 java.io.tmpdir
+    # 绝对路径：如 /data/uploads 或 /tmp/uploads
+    dir: ${FILE_UPLOAD_DIR:uploads}
     avatar:
       path: avatar
   access:
+    # 文件访问基础URL，如果为空则使用 /api/files 接口访问
+    # 如果配置了外部文件服务器（如CDN、COS），填写完整的基础URL
     base-url: ${FILE_ACCESS_BASE_URL:}
