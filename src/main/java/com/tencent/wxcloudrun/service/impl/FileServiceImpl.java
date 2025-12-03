@@ -28,6 +28,9 @@ public class FileServiceImpl implements FileService {
     @Value("${file.upload.avatar.path:avatar}")
     private String avatarPath;
 
+    @Value("${file.upload.max-size:10485760}")
+    private long maxFileSize; // 默认10MB
+
     @Value("${file.access.base-url:}")
     private String baseUrl;
 
@@ -101,6 +104,72 @@ public class FileServiceImpl implements FileService {
 
         logger.info("头像上传成功: userId={}, fileName={}, filePath={}, fileSize={}", 
                 userId, fileName, filePath, Files.size(filePath));
+
+        // 返回文件访问路径
+        String relativeFilePath = relativePath.replace(File.separator, "/") + "/" + fileName;
+        return getFileUrl(relativeFilePath);
+    }
+
+    @Override
+    public String uploadFile(MultipartFile file, String category, Integer userId) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("文件不能为空");
+        }
+
+        // 验证文件类型
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+
+        String extension = getFileExtension(originalFilename);
+        
+        // 验证文件大小
+        if (file.getSize() > maxFileSize) {
+            throw new IllegalArgumentException("文件大小不能超过 " + (maxFileSize / 1024 / 1024) + "MB");
+        }
+
+        // 获取上传基础路径（绝对路径）
+        Path basePath = getUploadBasePath();
+        
+        // 构建文件路径
+        String relativePath;
+        if (category != null && !category.trim().isEmpty()) {
+            if (userId != null) {
+                relativePath = category.trim() + File.separator + userId;
+            } else {
+                relativePath = category.trim();
+            }
+        } else {
+            if (userId != null) {
+                relativePath = "files" + File.separator + userId;
+            } else {
+                relativePath = "files";
+            }
+        }
+        
+        Path uploadPath = basePath.resolve(relativePath);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+            logger.info("创建上传目录: {}", uploadPath);
+        }
+
+        // 生成唯一文件名（保留原始文件名前缀）
+        String originalName = originalFilename.substring(0, 
+                originalFilename.lastIndexOf('.') > 0 ? originalFilename.lastIndexOf('.') : originalFilename.length());
+        String fileName = originalName + "_" + UUID.randomUUID().toString() + extension;
+        Path filePath = uploadPath.resolve(fileName);
+
+        // 保存文件
+        file.transferTo(filePath.toFile());
+        
+        // 验证文件是否保存成功
+        if (!Files.exists(filePath)) {
+            throw new IOException("文件保存失败: " + filePath);
+        }
+
+        logger.info("文件上传成功: category={}, userId={}, fileName={}, filePath={}, fileSize={}", 
+                category, userId, fileName, filePath, Files.size(filePath));
 
         // 返回文件访问路径
         String relativeFilePath = relativePath.replace(File.separator, "/") + "/" + fileName;

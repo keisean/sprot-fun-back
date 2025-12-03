@@ -1,21 +1,25 @@
 package com.tencent.wxcloudrun.controller;
 
+import com.tencent.wxcloudrun.config.ApiResponse;
+import com.tencent.wxcloudrun.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 文件访问控制器
@@ -26,8 +30,14 @@ public class FileController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
+    final FileService fileService;
+
     @Value("${file.upload.dir:uploads}")
     private String uploadDir;
+
+    public FileController(@Autowired FileService fileService) {
+        this.fileService = fileService;
+    }
 
     /**
      * 获取上传目录的绝对路径
@@ -49,6 +59,44 @@ public class FileController {
             }
         }
         return basePath.toAbsolutePath().normalize();
+    }
+
+    /**
+     * 通用文件上传接口
+     * @param file 文件
+     * @param category 文件分类（可选，如：avatar, document, image等）
+     * @param userId 用户ID（可选，从请求头获取）
+     * @return 文件上传结果
+     */
+    @PostMapping("/upload")
+    public ApiResponse uploadFile(@RequestParam("file") MultipartFile file,
+                                 @RequestParam(value = "category", required = false) String category,
+                                 @RequestHeader(value = "X-User-Id", required = false) Integer userId) {
+        logger.info("/api/files/upload post request, category: {}, userId: {}, fileName: {}", 
+                category, userId, file.getOriginalFilename());
+
+        if (file == null || file.isEmpty()) {
+            return ApiResponse.error("文件不能为空");
+        }
+
+        try {
+            // 上传文件
+            String fileUrl = fileService.uploadFile(file, category, userId);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("fileUrl", fileUrl);
+            result.put("fileName", file.getOriginalFilename());
+            result.put("fileSize", file.getSize());
+            result.put("contentType", file.getContentType());
+
+            return ApiResponse.ok(result);
+        } catch (IllegalArgumentException e) {
+            logger.error("文件上传失败: {}", e.getMessage());
+            return ApiResponse.error(e.getMessage());
+        } catch (Exception e) {
+            logger.error("文件上传失败", e);
+            return ApiResponse.error("文件上传失败: " + e.getMessage());
+        }
     }
 
     /**
